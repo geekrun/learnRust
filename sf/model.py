@@ -1,62 +1,95 @@
-# filed基类
+import functools
+
+
 class Field(object):
-	def __init__(self, name, column_type, primary_key, default):
-		self.name = name
-		self.column_type = column_type
-		self.primary_key = primary_key
-		self.default = default
+	def __init__(self, column_type, max_length, **kwargs):
+		'''
+		1，删除了参数name，field参数全部为定义字段类型相关参数，和众多有名的orm相同
+		2，使用反射，方便字段的扩展，如本例使用deafault就是反射的应用
+		3，如果想要做到好的解耦，可以先用反射给属性赋值，
+			然后在做检查，本文就不做更进一步处理
+		'''
+		self.column_type = column_type  # 字段类型
+		self.max_length = max_length  # 字段长度
+		self.default = None
+		if kwargs:
+			for k, v in kwargs.items():
+				if hasattr(self, k):
+					setattr(self, k, v)
 	
 	def __str__(self):
-		return '<%s, %s:%s>' % (self.__class__.__name__, self.column_type, self.name)
+		return '<%s>' % (self.__class__.__name__)
 
 
-# 创建StringField
 class StringField(Field):
-	def __init__(self, name=None, primary_key=False, default=None, ddl='varchar(100)'):
-		super().__init__(name, ddl, primary_key, default)
+	def __init__(self, max_length, **kwargs):
+		super().__init__(column_type='varchar({})'.format(max_length), max_length=max_length, **kwargs)
 
 
-# 创建IntField
-class IntField(Field):
-	def __init__(self, name=None, primary_key=False, default=None, ddl='bigint'):
-		super().__init__(name, ddl, primary_key, default)
+class IntegerField(Field):
+	def __init__(self, **kwargs):
+		super().__init__(column_type='bigint', max_length=8)
 
 
 class ModelMetaclass(type):
 	def __new__(cls, name, bases, attrs):
-		# 排除Model类本身:
 		if name == 'Model':
 			return type.__new__(cls, name, bases, attrs)
-		# 获取table名称:
-		tableName = attrs.get('__table__', None) or name
-		# 获取所有的Field和主键名:
 		mappings = dict()
-		fields = []
-		primaryKey = None
 		for k, v in attrs.items():
+			# print('k={},v={}'.format(k,v))
 			if isinstance(v, Field):
 				mappings[k] = v
-				if v.primary_key:
-					# 找到主键:
-					if primaryKey:
-						raise RuntimeError('Duplicate primary key for field: %s' % k)
-					primaryKey = k
-				else:
-					fields.append(k)
-		if not primaryKey:
-			raise RuntimeError('Primary key not found.')
 		for k in mappings.keys():
 			attrs.pop(k)
-		escaped_fields = list(map(lambda f: '`%s`' % f, fields))
 		attrs['__mappings__'] = mappings  # 保存属性和列的映射关系
-		attrs['__table__'] = tableName
-		attrs['__primary_key__'] = primaryKey  # 主键属性名
-		attrs['__fields__'] = fields  # 除主键外的属性名
-		# 构造默认的SELECT, INSERT, UPDATE和DELETE语句:
-		attrs['__select__'] = 'select `%s`, %s from `%s`' % (primaryKey, ', '.join(escaped_fields), tableName)
-		attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (
-		tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
-		attrs['__update__'] = 'update `%s` set %s where `%s`=?' % (
-		tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
-		attrs['__delete__'] = 'delete from `%s` where `%s`=?' % (tableName, primaryKey)
+		attrs['__table__'] = attrs.get('Meta').table or name  # 假设表名和类名一致
 		return type.__new__(cls, name, bases, attrs)
+
+
+class Model(dict, metaclass=ModelMetaclass):
+	def __init__(self, **kw):
+		super(Model, self).__init__(**kw)
+	
+	def __getattr__(self, key):
+		try:
+			return self[key]
+		except KeyError:
+			raise AttributeError(r"'Model' object has no attribute '%s'" % key)
+	
+	def __setattr__(self, key, value):
+		self[key] = value
+	
+	def save(self):
+		fields = []
+		params = []
+		for k, v in self.__mappings__.items():
+			fields.append(k)
+			params.append(getattr(self, k, v.default))
+		sql = 'insert into {} ({}) values ({})'.format(self.__table__, self.join(fields), self.join(params))
+		print('SQL: %s' % sql)
+	
+	# 自己写了一个join函数，廖雪峰老师使用自带join，无法处理数字等非字符串类型
+	def join(self, attrs, pattern=','):
+		return functools.reduce(lambda x, y: '{}{}{}'.format(x, pattern, y), attrs)
+
+
+class User(Model):
+	# 使用Meta，能自定义表的相关信息
+	class Meta:
+		# 自定义表名
+		table = 'users'
+	
+	# 定义类的属性到列的映射：
+	id = IntegerField()
+	name = StringField(max_length=50)
+	email = StringField(max_length=50, default='root@123.com')
+	password = StringField(max_length=50)
+
+
+if __name__ == "__main__":
+	# 创建一个实例：
+	u = User(id=234, name='jane', password='pwd')
+	# 保存到数据库：
+	u.save()
+	# 打印结果;SQL: insert into users (id,name,email,password) values (234,jane,root@123.com,pwd)
