@@ -1,0 +1,10 @@
+.captcha1 > img {
+    float: right;
+    margin-top: 5px;
+    width: 100px;
+    height: 30px;
+}
+
+.captcha1 > input {
+    width: 80px;
+}
