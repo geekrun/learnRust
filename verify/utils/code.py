@@ -1,3 +1,6 @@
+```python
+
+# string模块自带数字、字母、特殊字符变量集合，不需要我们手写集合
 import string
 import random
 import os
@@ -8,11 +11,11 @@ from  PIL import Image, ImageDraw, ImageColor, ImageFilter, ImageFont
 
 
 class Code(object):
-	# 随机生成数字或字母
+	# 生成随机生成数字或字母
 	def random_hexdigits(self, len=1):
 		return random.sample(string.hexdigits, len)
 	
-	# 干扰字符
+	# 生成干扰字符
 	def punctuation(self, len=1):
 		return tuple(random.sample(string.punctuation, len))
 	
@@ -23,14 +26,15 @@ class Code(object):
 	# 生成验证码
 	def creat_code(self, width=80, height=24, color=(192, 192, 192)):
 		image = Image.new('RGB', (width, height), color)
+		# 建议下载几款字体，变换下风格，我在setting粒定义了static路径，这里就直接导入了
 		font = ImageFont.truetype(os.path.join(settings.STATICPATH, 'fonts/Lora-Regular.ttf'), 20)
 		draw = ImageDraw.Draw(image)
-		self.fill_color(draw, image, 5)
-		self.fill_dischar(draw, image, 10)
-		code = self.fill_char(draw, image, 4, 10, font)
-		image_name = '{}.jpeg'.format(uuid.uuid4().hex)
+		self.fill_color(draw, image, 5)  # 填充背景色
+		self.fill_dischar(draw, image, 10)  # 填充干扰
+		code = self.fill_char(draw, image, 4, 10, font)  # 填充验证码
+		image_name = '{}.jpeg'.format(uuid.uuid4().hex)  # 获取验证码名字
 		image_path = os.path.join(settings.STATICPATH, 'code/{}'.format(image_name))
-		print(image_path)
+		#print(image_path)
 		image.save(image_path)
 		return {'code': code, 'image_path': image_path}
 	
