@@ -1,4 +1,4 @@
-```python
+
 
 # string模块自带数字、字母、特殊字符变量集合，不需要我们手写集合
 import string
@@ -34,7 +34,7 @@ class Code(object):
 		code = self.fill_char(draw, image, 4, 10, font)  # 填充验证码
 		image_name = '{}.jpeg'.format(uuid.uuid4().hex)  # 获取验证码名字
 		image_path = os.path.join(settings.STATICPATH, 'code/{}'.format(image_name))
-		#print(image_path)
+		# print(image_path)
 		image.save(image_path)
 		return {'code': code, 'image_path': image_path}
 	
