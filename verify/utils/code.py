@@ -57,6 +57,7 @@ class Code(object):
 		for i in range(num):
 			cha = self.random_hexdigits()
 			code += str(cha[0])
+			# 坐标是验证码的右上角位置，所以建议坐标靠左右位置
 			j = random.randrange(0, 5)
 			# print(cha)
 			# print(image.width*(i/num)+interval,j)
