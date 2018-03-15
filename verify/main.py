@@ -14,13 +14,10 @@ def Register():
 @app.route('/codes/')
 def code():
 	infor = Code().creat_code()
-	image_path = infor["image_path"]
+	image_file = infor["image_file"]
 	code = infor['code']
-	
-	print(image_path)
-	with open(image_path, 'rb') as f:
-		image_content = f.read()
-	os.remove(image_path)
+	image_content = image_file.getvalue()
+	image_file.close()
 	return Response(image_content, mimetype='jpeg')
 
 

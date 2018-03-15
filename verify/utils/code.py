@@ -1,11 +1,8 @@
-
-
 # string模块自带数字、字母、特殊字符变量集合，不需要我们手写集合
 import string
 import random
 import os
-import uuid
-
+from io import BytesIO
 import settings
 from  PIL import Image, ImageDraw, ImageColor, ImageFilter, ImageFont
 
@@ -32,11 +29,12 @@ class Code(object):
 		self.fill_color(draw, image, 5)  # 填充背景色
 		self.fill_dischar(draw, image, 10)  # 填充干扰
 		code = self.fill_char(draw, image, 4, 10, font)  # 填充验证码
-		image_name = '{}.jpeg'.format(uuid.uuid4().hex)  # 获取验证码名字
-		image_path = os.path.join(settings.STATICPATH, 'code/{}'.format(image_name))
+		# image_name = '{}.jpeg'.format(uuid.uuid4().hex)  # 获取验证码名字
+		# image_path = os.path.join(settings.STATICPATH, 'code/{}'.format(image_name))
 		# print(image_path)
-		image.save(image_path)
-		return {'code': code, 'image_path': image_path}
+		image_file = BytesIO()
+		image.save(image_file, 'jpeg')
+		return {'code': code, 'image_file': image_file}
 	
 	# 填充颜色
 	def fill_color(self, draw, image, interval):
