@@ -18,8 +18,8 @@ configurations {
 }
 
 repositories {
-//    mavenLocal() //直接使用本地maven仓库
-    maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
+    mavenLocal() //直接使用本地maven仓库
+    maven ("http://maven.aliyun.com/nexus/content/groups/public")
     mavenCentral()
 
 }
