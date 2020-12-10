@@ -1,6 +1,6 @@
 plugins {
     java
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.10"
 }
 
 group = "com.kotlin.learn.basic"
@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.10")
     testCompile("junit", "junit", "4.12")
 }
 
